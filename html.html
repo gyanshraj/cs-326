@@ -1,0 +1,227 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Production Planning Dashboard</title>
+    <style>
+        body {
+            font-family: Arial;
+            background-color: #f2f2f2;
+            margin: 20px;
+        }
+
+        h1 {
+            color: white;
+            background-color: #1f4e79;
+            padding: 15px;
+        }
+
+        h2 {
+            color: #1f4e79;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            border: 1px solid #888888;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #d9eaf7;
+        }
+
+        form {
+            background-color: white;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        input, select {
+            margin: 5px;
+            padding: 6px;
+        }
+
+        label {
+            display: inline-block;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Production Planning Dashboard</h1>
+    <p>This page shows the factory's production orders, machines, workers, and materials.</p>
+
+    <h2>Today's Summary</h2>
+    <ul>
+        <li>Active orders: <span id="activeOrders">3</span></li>
+        <li>Machines working: 3</li>
+        <li>Orders on schedule: 2</li>
+    </ul>
+
+    <h2>Add a Production Order</h2>
+    <form id="orderForm" onsubmit="addOrder(event)">
+        <label>Order number:
+            <input type="text" name="order" placeholder="Example: PO-104" required>
+        </label>
+        <br>
+
+        <label>Product:
+            <input type="text" name="product" placeholder="Product name" required>
+        </label>
+        <br>
+
+        <label>Quantity:
+            <input type="number" name="quantity" min="1" required>
+        </label>
+        <br>
+
+        <label>Machine:
+            <select name="machine">
+                <option>Press 1</option>
+                <option>CNC 2</option>
+                <option>Mould 3</option>
+            </select>
+        </label>
+        <br>
+
+        <label>Worker:
+            <input type="text" name="worker" placeholder="Worker name">
+        </label>
+        <br>
+
+        <label>Production stage:
+            <select name="stage">
+                <option>Cutting</option>
+                <option>Machining</option>
+                <option>Assembly</option>
+                <option>Quality Check</option>
+            </select>
+        </label>
+        <br>
+
+        <label>Due date:
+            <input type="date" name="due-date">
+        </label>
+        <br>
+
+        <label>Status:
+            <select name="status">
+                <option>On time</option>
+                <option>Delayed</option>
+            </select>
+        </label>
+        <br>
+
+        <label>Progress (%):
+            <input type="number" name="progress" min="0" max="100" value="0">
+        </label>
+        <br>
+
+        <input type="submit" value="Submit Order">
+    </form>
+
+    <h2>Production Orders</h2>
+    <table id="ordersTable">
+        <tr>
+            <th>Order</th>
+            <th>Product</th>
+            <th>Quantity</th>
+            <th>Machine</th>
+            <th>Worker</th>
+            <th>Stage</th>
+            <th>Schedule</th>
+            <th>Status and Progress</th>
+        </tr>
+        <tr>
+            <td>PO-101</td>
+            <td>Steel Bottle</td>
+            <td>500</td>
+            <td>Press 1</td>
+            <td>Ravi</td>
+            <td>Assembly</td>
+            <td>20 October</td>
+            <td>On time - 75%</td>
+        </tr>
+        <tr>
+            <td>PO-102</td>
+            <td>Gear Set</td>
+            <td>320</td>
+            <td>CNC 2</td>
+            <td>Meena</td>
+            <td>Machining</td>
+            <td>21 October</td>
+            <td>Delayed - 45%</td>
+        </tr>
+        <tr>
+            <td>PO-103</td>
+            <td>Pipe Connector</td>
+            <td>700</td>
+            <td>Mould 3</td>
+            <td>Arjun</td>
+            <td>Quality Check</td>
+            <td>22 October</td>
+            <td>On time - 90%</td>
+        </tr>
+    </table>
+
+    <h2>Material Status</h2>
+    <table>
+        <tr>
+            <th>Material</th>
+            <th>Available Quantity</th>
+            <th>Status</th>
+        </tr>
+        <tr>
+            <td>Steel sheets</td>
+            <td>240 kg</td>
+            <td>Available</td>
+        </tr>
+        <tr>
+            <td>Gear blanks</td>
+            <td>35 pieces</td>
+            <td style="color: #b36b00;">Low stock</td>
+        </tr>
+        <tr>
+            <td>Plastic pellets</td>
+            <td>90 kg</td>
+            <td>Available</td>
+        </tr>
+    </table>
+
+    <script>
+        function addOrder(event) {
+            event.preventDefault();
+
+            var form = document.getElementById("orderForm");
+            var table = document.getElementById("ordersTable");
+            var row = table.insertRow(-1);
+
+            row.insertCell(0).textContent = form.elements["order"].value;
+            row.insertCell(1).textContent = form.elements["product"].value;
+            row.insertCell(2).textContent = form.elements["quantity"].value;
+            row.insertCell(3).textContent = form.elements["machine"].value;
+            row.insertCell(4).textContent = form.elements["worker"].value;
+            row.insertCell(5).textContent = form.elements["stage"].value;
+            row.insertCell(6).textContent =
+                form.elements["due-date"].value || "Not set";
+            row.insertCell(7).textContent =
+                form.elements["status"].value + " - " +
+                form.elements["progress"].value + "%";
+
+            var activeOrders = document.getElementById("activeOrders");
+            activeOrders.textContent =
+                Number(activeOrders.textContent) + 1;
+
+            form.reset();
+        }
+    </script>
+</body>
+</html>
+```
