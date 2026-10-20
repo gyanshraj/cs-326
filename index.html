@@ -1,0 +1,230 @@
+Here’s the current code. Save it as `index.html` and open it in a browser. The small JavaScript section at the bottom makes **Submit Order** add a row to the table.
+
+```html
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A simple production planning dashboard for factory operations.">
+  <title>Production Planning Dashboard</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --navy: #17324d;
+      --blue: #2563eb;
+      --blue-light: #e8f0ff;
+      --ink: #17212b;
+      --muted: #617080;
+      --line: #dbe3ec;
+      --surface: #fff;
+      --background: #f5f7fa;
+      --success: #16734a;
+      --warning: #a35b00;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: var(--background); line-height: 1.5; }
+    .container { width: min(1180px, calc(100% - 2rem)); margin: 0 auto; }
+    header { color: #fff; background: var(--navy); padding: 3rem 0 2.5rem; }
+    h1, h2, p { margin-top: 0; }
+    h1 { margin-bottom: .5rem; font-size: clamp(2rem, 5vw, 3rem); letter-spacing: -.03em; }
+    header p { max-width: 42rem; margin-bottom: 0; color: #d6e4f2; }
+    main { padding: 2rem 0 4rem; }
+    .section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+    h2 { margin-bottom: 0; color: var(--navy); font-size: 1.35rem; }
+    .summary, .content-grid { display: grid; gap: 1rem; }
+    .summary { grid-template-columns: repeat(3, 1fr); margin-bottom: 2rem; }
+    .card, .panel { background: var(--surface); border: 1px solid var(--line); border-radius: .75rem; box-shadow: 0 4px 16px rgb(23 50 77 / 5%); }
+    .card { padding: 1.25rem; }
+    .card-label { margin-bottom: .35rem; color: var(--muted); font-size: .85rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+    .card-value { margin: 0; color: var(--navy); font-size: 2rem; font-weight: 800; }
+    .content-grid { grid-template-columns: minmax(280px, .8fr) minmax(0, 2fr); align-items: start; }
+    .panel { padding: 1.5rem; }
+    .panel + .panel { margin-top: 1.5rem; }
+    .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+    label { display: grid; gap: .35rem; color: var(--navy); font-size: .9rem; font-weight: 700; }
+    input, select, button { width: 100%; min-height: 2.75rem; border: 1px solid #bdc9d6; border-radius: .45rem; font: inherit; }
+    input, select { padding: .55rem .7rem; color: var(--ink); background: #fff; }
+    input:focus, select:focus, button:focus-visible { outline: 3px solid rgb(37 99 235 / 25%); outline-offset: 1px; border-color: var(--blue); }
+    .full-width { grid-column: 1 / -1; }
+    button { padding: .55rem 1rem; color: #fff; background: var(--blue); border-color: var(--blue); font-weight: 700; cursor: pointer; }
+    button:hover { background: #1d4ed8; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+    th, td { padding: .85rem .75rem; border-bottom: 1px solid var(--line); text-align: left; }
+    th { color: var(--muted); background: #f8fafc; font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; }
+    tbody tr:last-child td { border-bottom: 0; }
+    .status { display: inline-block; padding: .2rem .55rem; border-radius: 999px; font-size: .8rem; font-weight: 700; }
+    .on-time, .available { color: var(--success); background: #e8f7ef; }
+    .delayed, .low-stock { color: var(--warning); background: #fff4df; }
+    .progress { display: flex; align-items: center; gap: .5rem; }
+    progress { width: 5rem; height: .5rem; accent-color: var(--blue); }
+    .notice { min-height: 1.5rem; margin: 1rem 0 0; color: var(--success); font-size: .9rem; font-weight: 600; }
+
+    @media (max-width: 800px) {
+      .content-grid, .summary { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 520px) {
+      .container { width: min(100% - 1.25rem, 1180px); }
+      header { padding: 2rem 0; }
+      main { padding-top: 1.25rem; }
+      .form-grid { grid-template-columns: 1fr; }
+      .full-width { grid-column: auto; }
+      .panel { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>Production Planning Dashboard</h1>
+      <p>Track production orders, machine assignments, workforce, and material availability in one place.</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <section aria-labelledby="summary-title">
+      <div class="section-heading">
+        <h2 id="summary-title">Today's summary</h2>
+      </div>
+      <div class="summary">
+        <article class="card">
+          <p class="card-label">Active orders</p>
+          <p class="card-value" id="activeOrders">3</p>
+        </article>
+        <article class="card">
+          <p class="card-label">Machines working</p>
+          <p class="card-value">3</p>
+        </article>
+        <article class="card">
+          <p class="card-label">Orders on schedule</p>
+          <p class="card-value" id="onSchedule">2</p>
+        </article>
+      </div>
+    </section>
+
+    <div class="content-grid">
+      <section class="panel" aria-labelledby="add-order-title">
+        <div class="section-heading">
+          <h2 id="add-order-title">Add a production order</h2>
+        </div>
+        <form id="orderForm">
+          <div class="form-grid">
+            <label>Order number
+              <input name="order" placeholder="PO-104" required>
+            </label>
+            <label>Product
+              <input name="product" placeholder="Product name" required>
+            </label>
+            <label>Quantity
+              <input name="quantity" type="number" min="1" required>
+            </label>
+            <label>Machine
+              <select name="machine">
+                <option>Press 1</option><option>CNC 2</option><option>Mould 3</option>
+              </select>
+            </label>
+            <label>Worker
+              <input name="worker" placeholder="Worker name">
+            </label>
+            <label>Production stage
+              <select name="stage">
+                <option>Cutting</option><option>Machining</option><option>Assembly</option><option>Quality Check</option>
+              </select>
+            </label>
+            <label>Due date
+              <input name="dueDate" type="date">
+            </label>
+            <label>Status
+              <select name="status">
+                <option>On time</option><option>Delayed</option>
+              </select>
+            </label>
+            <label>Progress (%)
+              <input name="progress" type="number" min="0" max="100" value="0">
+            </label>
+            <div class="full-width">
+              <button type="submit">Add order</button>
+              <p class="notice" id="formMessage" role="status" aria-live="polite"></p>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel" aria-labelledby="orders-title">
+        <div class="section-heading">
+          <h2 id="orders-title">Production orders</h2>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Order</th><th>Product</th><th>Quantity</th><th>Machine</th><th>Worker</th><th>Stage</th><th>Due date</th><th>Status</th></tr>
+            </thead>
+            <tbody id="ordersBody">
+              <tr><td>PO-101</td><td>Steel Bottle</td><td>500</td><td>Press 1</td><td>Ravi</td><td>Assembly</td><td>20 October</td><td><span class="status on-time">On time</span> <span class="progress"><progress value="75" max="100"></progress>75%</span></td></tr>
+              <tr><td>PO-102</td><td>Gear Set</td><td>320</td><td>CNC 2</td><td>Meena</td><td>Machining</td><td>21 October</td><td><span class="status delayed">Delayed</span> <span class="progress"><progress value="45" max="100"></progress>45%</span></td></tr>
+              <tr><td>PO-103</td><td>Pipe Connector</td><td>700</td><td>Mould 3</td><td>Arjun</td><td>Quality Check</td><td>22 October</td><td><span class="status on-time">On time</span> <span class="progress"><progress value="90" max="100"></progress>90%</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <section class="panel" aria-labelledby="materials-title" style="margin-top: 1.5rem;">
+      <div class="section-heading">
+        <h2 id="materials-title">Material status</h2>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Material</th><th>Available quantity</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>Steel sheets</td><td>240 kg</td><td><span class="status available">Available</span></td></tr>
+            <tr><td>Gear blanks</td><td>35 pieces</td><td><span class="status low-stock">Low stock</span></td></tr>
+            <tr><td>Plastic pellets</td><td>90 kg</td><td><span class="status available">Available</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const form = document.querySelector("#orderForm");
+    const ordersBody = document.querySelector("#ordersBody");
+    const activeOrders = document.querySelector("#activeOrders");
+    const onSchedule = document.querySelector("#onSchedule");
+    const formMessage = document.querySelector("#formMessage");
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const data = new FormData(form);
+      const progress = Number(data.get("progress"));
+      const status = data.get("status");
+      const row = document.createElement("tr");
+      const values = ["order", "product", "quantity", "machine", "worker", "stage"];
+
+      values.forEach((name) => {
+        const cell = document.createElement("td");
+        cell.textContent = data.get(name) || "Not set";
+        row.append(cell);
+      });
+
+      const dueDate = document.createElement("td");
+      dueDate.textContent = data.get("dueDate") || "Not set";
+      row.append(dueDate);
+
+      const statusCell = document.createElement("td");
+      statusCell.innerHTML = `<span class="status ${status === "Delayed" ? "delayed" : "on-time"}">${status}</span> <span class="progress"><progress value="${progress}" max="100"></progress>${progress}%</span>`;
+      row.append(statusCell);
+      ordersBody.append(row);
+
+      activeOrders.textContent = Number(activeOrders.textContent) + 1;
+      if (status === "On time") onSchedule.textContent = Number(onSchedule.textContent) + 1;
+      form.reset();
+      formMessage.textContent = `${data.get("order")} was added successfully.`;
+    });
+  </script>
+</body>
+</html>
+```
